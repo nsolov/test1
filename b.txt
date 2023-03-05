@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26" zv="IRIS for UNIX (Ubuntu Server LTS for ARM64 Containers) 2022.2 (Build 368U)" ts="2023-03-05 10:01:24">
+<Class name="PyTest.CFG">
+<TimeChanged>66538,11191.808014631</TimeChanged>
+<TimeCreated>66534,14745.440922218</TimeCreated>
+
+<Method name="ReadData">
+<ClassMethod>1</ClassMethod>
+<Language>python</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+    import configparser
+
+    config = configparser.ConfigParser()
+    config.readfp(open(r'/irisdev/app/setup.cfg'))
+    name = config.get('metadata', 'name')
+
+    return name
+]]></Implementation>
+</Method>
+
+<Method name="Test">
+<ClassMethod>1</ClassMethod>
+<Language>python</Language>
+<ReturnType>%String</ReturnType>
+<Implementation><![CDATA[
+    import ast
+    from ast import parse, Call, walk, NodeVisitor
+    import importlib
+    import inspect  
+
+
+    with open("/irisdev/app/setup.py", "r") as source:  
+        p = ast.parse(source.read())  
+
+    # print(ast.dump(ast_tree))  
+
+    from ast import literal_eval
+
+    class FindCall(NodeVisitor):
+        def __str__(self):
+            return f"setup: {self.setup}  {self.value}..."
+
+        def __init__(self, *args):
+            self.setup = 0
+            self.value = ''
+
+        def visit_Call(self, node):
+            func = node.func
+            if hasattr(func, 'id'):
+                if func.id == 'setup':
+                    print(ast.dump(node))
+                    self.setup = 1
+                    for keyword in node.keywords:
+                        print(keyword.arg)
+                        if (keyword.arg=='name'):
+                            self.value = keyword.value
+            #
+            #if node.func.id in self.result:
+            #    self.result[node.func.id].append(map(literal_eval, node.args))
+            # visit the children
+            self.generic_visit(node)
+            
+
+    fc = FindCall()
+    fc.visit(p)
+    print(fc)
+
+    print(ast.literal_eval(fc.value))
+
+
+    return 'test'
+]]></Implementation>
+</Method>
+</Class>
+</Export>
